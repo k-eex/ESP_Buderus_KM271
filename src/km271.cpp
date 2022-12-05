@@ -45,7 +45,7 @@ String cfgOperatingMode[]={"night", "day", "auto"};
 String cfgDisplay[]={"auto", "boiler", "DHW", "outdoor"};
 String cfgLanguage[]={"DE", "FR", "IT", "NL", "EN", "PL"};
 String cfgReductionMode[]={"off", "fixed", "room", "outdoors"};
-String cfgSummerModeThreshold[]={"always","10 °C","11 °C","12 °C","13 °C","14 °C","15 °C","16 °C","17 °C","18 °C","19 °C","20 °C","21 °C","22 °C","23 °C","24 °C","25 °C","26 °C","27 °C","28 °C","29 °C","30 °C","Winter"};
+String cfgSummerModeThreshold[]={"summer","10 °C","11 °C","12 °C","13 °C","14 °C","15 °C","16 °C","17 °C","18 °C","19 °C","20 °C","21 °C","22 °C","23 °C","24 °C","25 °C","26 °C","27 °C","28 °C","29 °C","30 °C","winter"};
 String cfgSwitchOnTemperature[]={"off","1","2","3","4","5","6","7","8","9","10"};
 String cfgHeatingSystem[]={"off","radiator","-","underfloor"};
 String cfgOnOff[]={"off","on"};
@@ -137,7 +137,7 @@ void parseInfo(uint8_t *data, int len) {
       mqttPublish(addTopic("/status/HK1_BW1_on_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 1)).c_str(), false);
       mqttPublish(addTopic("/status/HK1_BW1_auto"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 2)).c_str(), false);
       mqttPublish(addTopic("/status/HK1_BW1_DHW_priority"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 3)).c_str(), false);        
-      mqttPublish(addTopic("/status/HK1_BW1_??_drying"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 4)).c_str(), false);
+      mqttPublish(addTopic("/status/HK1_BW1__drying"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 4)).c_str(), false);
       mqttPublish(addTopic("/status/HK1_BW1_holiday"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 5)).c_str(), false);
       mqttPublish(addTopic("/status/HK1_BW1_frost_protection"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 6)).c_str(), false);
       mqttPublish(addTopic("/status/HK1_BW1_manual"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 7)).c_str(), false);   
