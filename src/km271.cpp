@@ -412,7 +412,7 @@ void parseInfo(uint8_t *data, int len) {
       break;
 
     case 0x004d: 
-      mqttPublish(addTopic("/config/DHW_priority"), cfgAnAus[data[2+1]].c_str(), false);     // "CFG_WW_Vorrang"   => "004d:1,a"
+      mqttPublish(addTopic("/config/DHW_priority"), cfgOnOff[data[2+1]].c_str(), false);     // "CFG_WW_Vorrang"   => "004d:1,a"
       break;
 
     case 0x0070: 
