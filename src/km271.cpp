@@ -123,7 +123,20 @@ void parseInfo(uint8_t *data, int len) {
   xSemaphoreTake(accessMutex, portMAX_DELAY);                             // Prevent task switch to ensure the whole structure remains constistent
   memcpy(&tmpState, &kmState, sizeof(s_km271_status));
   xSemaphoreGive(accessMutex);
-  uint kmregister = (data[0] * 256) + data[1];
+  uint16_t kmregister = (data[0] * 256) + data[1];
+  #ifdef DEBUG_ON
+  {
+    char topic[17];
+    snprintf(topic, sizeof(topic), "/unparsed/0x%04X", kmregister);
+    char message[64];
+    char *cp = &message[0], *end = &message[sizeof(message)];
+    for (int i=2; i<len && cp < end; i++) {
+      cp += snprintf(cp, end - cp, "%02X ", (unsigned)data[i]);
+    }
+    *(end-1)=0; // force terminator at the end
+    mqttPublish(addTopic(topic), message, false); 
+  }
+  #endif
   switch(kmregister) {                                     // Check if we can find known stati
     
     /*
@@ -133,80 +146,158 @@ void parseInfo(uint8_t *data, int len) {
     */
     case 0x8000:                                                          
       tmpState.HeatingCircuitOperatingStates_1 = data[2];                 // 0x8000 : Bitfield 
-      mqttPublish(addTopic("/status/HK1_BW1_off_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 0)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW1_on_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 1)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW1_auto"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 2)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW1_DHW_priority"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 3)).c_str(), false);        
-      mqttPublish(addTopic("/status/HK1_BW1__drying"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 4)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW1_holiday"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 5)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW1_frost_protection"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 6)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW1_manual"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 7)).c_str(), false);   
+      mqttPublish(addTopic("/status/HC1_BW1_off_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 0)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW1_on_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 1)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW1_auto"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 2)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW1_DHW_priority"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 3)).c_str(), false);        
+      mqttPublish(addTopic("/status/HC1_BW1_screed_drying"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 4)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW1_holiday"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 5)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW1_frost_protection"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 6)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW1_manual"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 7)).c_str(), false);   
+      break;
+
+    case 0x8112:
+      tmpState.HeatingCircuitOperatingStates_1 = data[2];                 // 0x8000 : Bitfield 
+      mqttPublish(addTopic("/status/HC2_BW1_off_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 0)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW1_on_time_optimization"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 1)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW1_auto"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 2)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW1_DHW_priority"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 3)).c_str(), false);        
+      mqttPublish(addTopic("/status/HC2_BW1_screed_drying"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 4)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW1_holiday"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 5)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW1_frost_protection"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 6)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW1_manual"), String(bitRead(tmpState.HeatingCircuitOperatingStates_1, 7)).c_str(), false);   
       break;
       
-    case 0x8001:                                                          
+    case 0x8001:
       tmpState.HeatingCircuitOperatingStates_2 = data[2];                 // 0x8001 : Bitfield
-      mqttPublish(addTopic("/status/HK1_BW2_summer"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 0)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW2_day"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 1)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW2_no_operation_with_FB"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 2)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW2_FB_faulty"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 3)).c_str(), false); 
-      mqttPublish(addTopic("/status/HK1_BW2_failure_flow_sensor"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 4)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW2_flow_at_maximum"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 5)).c_str(), false);
-      mqttPublish(addTopic("/status/HK1_BW2_external_signal_input"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 6)).c_str(), false);        
+      mqttPublish(addTopic("/status/HC1_BW2_summer"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 0)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW2_day"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 1)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW2_no_operation_with_FB"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 2)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW2_FB_faulty"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 3)).c_str(), false); 
+      mqttPublish(addTopic("/status/HC1_BW2_failure_flow_sensor"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 4)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW2_flow_at_maximum"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 5)).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_BW2_external_signal_input"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 6)).c_str(), false);        
       break;
-      
+
+     case 0x8113:
+      tmpState.HeatingCircuitOperatingStates_2 = data[2];                 // 0x8001 : Bitfield
+      mqttPublish(addTopic("/status/HC2_BW2_summer"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 0)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW2_day"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 1)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW2_no_operation_with_FB"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 2)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW2_FB_faulty"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 3)).c_str(), false); 
+      mqttPublish(addTopic("/status/HC2_BW2_failure_flow_sensor"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 4)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW2_flow_at_maximum"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 5)).c_str(), false);
+      mqttPublish(addTopic("/status/HC2_BW2_external_signal_input"), String(bitRead(tmpState.HeatingCircuitOperatingStates_2, 6)).c_str(), false);        
+      break;
+     
     case 0x8002:
       tmpState.HeatingForwardTargetTemp = (float)data[2];                 // 0x8002 : Temperature (1C resolution)
-      mqttPublish(addTopic("/status/HK1_flow_setpoint"), String(tmpState.HeatingForwardTargetTemp).c_str(), false);  
+      mqttPublish(addTopic("/status/HC1_flow_setpoint"), String(tmpState.HeatingForwardTargetTemp).c_str(), false);  
+      break;
+
+    case 0x8114:
+      tmpState.HeatingForwardTargetTemp = (float)data[2];                 // 0x8002 : Temperature (1C resolution)
+      mqttPublish(addTopic("/status/HC2_flow_setpoint"), String(tmpState.HeatingForwardTargetTemp).c_str(), false);  
       break;
       
     case 0x8003:
       tmpState.HeatingForwardActualTemp = (float)data[2];                 // 0x8003 : Temperature (1C resolution)
-      mqttPublish(addTopic("/status/HK1_flow_temperature"), String(tmpState.HeatingForwardActualTemp).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_flow_temperature"), String(tmpState.HeatingForwardActualTemp).c_str(), false);
+      break;
+      
+    case 0x8115:
+      tmpState.HeatingForwardActualTemp = (float)data[2];                 // 0x8003 : Temperature (1C resolution)
+      mqttPublish(addTopic("/status/HC2_flow_temperature"), String(tmpState.HeatingForwardActualTemp).c_str(), false);
       break;
       
     case 0x8004:
       tmpState.RoomTargetTemp = decode05cTemp(data[2]);                   // 0x8004 : Temperature (0.5C resolution)
-      mqttPublish(addTopic("/status/HK1_room_setpoint"), String(tmpState.RoomTargetTemp).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_room_setpoint"), String(tmpState.RoomTargetTemp).c_str(), false);
+      break;
+      
+    case 0x8116:
+      tmpState.RoomTargetTemp = decode05cTemp(data[2]);                   // 0x8004 : Temperature (0.5C resolution)
+      mqttPublish(addTopic("/status/HC2_room_setpoint"), String(tmpState.RoomTargetTemp).c_str(), false);
       break;
       
     case 0x8005:
       tmpState.RoomActualTemp = decode05cTemp(data[2]);                   // 0x8005 : Temperature (0.5C resolution)
-      mqttPublish(addTopic("/status/HK1_room_temperature"), String(tmpState.RoomActualTemp).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_room_temperature"), String(tmpState.RoomActualTemp).c_str(), false);
+      break;
+      
+    case 0x8117:
+      tmpState.RoomActualTemp = decode05cTemp(data[2]);                   // 0x8005 : Temperature (0.5C resolution)
+      mqttPublish(addTopic("/status/HC2_room_temperature"), String(tmpState.RoomActualTemp).c_str(), false);
       break;
       
     case 0x8006:
       tmpState.SwitchOnOptimizationTime = data[2];                        // 0x8006 : Minutes
-      mqttPublish(addTopic("/status/HK1_on_time_optimization_duration"), String(tmpState.SwitchOnOptimizationTime).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_on_time_optimization_duration"), String(tmpState.SwitchOnOptimizationTime).c_str(), false);
+      break;
+      
+    case 0x8118:
+      tmpState.SwitchOnOptimizationTime = data[2];                        // 0x8006 : Minutes
+      mqttPublish(addTopic("/status/HC2_on_time_optimization_duration"), String(tmpState.SwitchOnOptimizationTime).c_str(), false);
       break;
       
     case 0x8007:  
       tmpState.SwitchOffOptimizationTime = data[2];                       // 0x8007 : Minutes
-      mqttPublish(addTopic("/status/HK1_off_time_optimization_duration"), String(tmpState.SwitchOffOptimizationTime).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_off_time_optimization_duration"), String(tmpState.SwitchOffOptimizationTime).c_str(), false);
+      break;
+      
+    case 0x8119:
+      tmpState.SwitchOffOptimizationTime = data[2];                       // 0x8007 : Minutes
+      mqttPublish(addTopic("/status/HC2_off_time_optimization_duration"), String(tmpState.SwitchOffOptimizationTime).c_str(), false);
       break;
       
     case 0x8008:  
       tmpState.PumpPower = data[2];                                       // 0x8008 : Percent
-      mqttPublish(addTopic("/status/HK1_pump"), String(tmpState.PumpPower).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_pump"), String(tmpState.PumpPower).c_str(), false);
+      break;
+      
+    case 0x811a:  
+      tmpState.PumpPower = data[2];                                       // 0x8008 : Percent
+      mqttPublish(addTopic("/status/HC2_pump"), String(tmpState.PumpPower).c_str(), false);
       break;
       
     case 0x8009:
       tmpState.MixingValue = data[2];                                     // 0x8009 : Percent
-      mqttPublish(addTopic("/status/HK1_mixer"), String(tmpState.MixingValue).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_mixer"), String(tmpState.MixingValue).c_str(), false);
+      break;
+      
+    case 0x811b:
+      tmpState.MixingValue = data[2];                                     // 0x8009 : Percent
+      mqttPublish(addTopic("/status/HC2_mixer"), String(tmpState.MixingValue).c_str(), false);
       break;
       
     case 0x800c:
       tmpState.HeatingCurvePlus10 = (float)data[2];                       // 0x800c : Temperature (1C resolution)
-      mqttPublish(addTopic("/status/HK1_heat_curve_10C"), String(tmpState.HeatingCurvePlus10).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_heat_curve_10C"), String(tmpState.HeatingCurvePlus10).c_str(), false);
+      break;
+      
+    case 0x811e:
+      tmpState.HeatingCurvePlus10 = (float)data[2];                       // 0x800c : Temperature (1C resolution)
+      mqttPublish(addTopic("/status/HC2_heat_curve_10C"), String(tmpState.HeatingCurvePlus10).c_str(), false);
       break;
       
     case 0x800d:
       tmpState.HeatingCurve0 = (float)data[2];                            // 0x800d : Temperature (1C resolution)
-      mqttPublish(addTopic("/status/HK1_heat_curve_0C"), String(tmpState.HeatingCurve0).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_heat_curve_0C"), String(tmpState.HeatingCurve0).c_str(), false);
+      break;
+      
+    case 0x811f:
+      tmpState.HeatingCurve0 = (float)data[2];                            // 0x800d : Temperature (1C resolution)
+      mqttPublish(addTopic("/status/HC2_heat_curve_0C"), String(tmpState.HeatingCurve0).c_str(), false);
       break;
       
     case 0x800e:
       tmpState.HeatingCurveMinus10 = (float)data[2];                      // 0x800e : Temperature (1C resolution)
-      mqttPublish(addTopic("/status/HK1_heat_curve_-10C"), String(tmpState.HeatingCurveMinus10).c_str(), false);
+      mqttPublish(addTopic("/status/HC1_heat_curve_-10C"), String(tmpState.HeatingCurveMinus10).c_str(), false);
+      break;
+      
+    case 0x8120:
+      tmpState.HeatingCurveMinus10 = (float)data[2];                      // 0x800e : Temperature (1C resolution)
+      mqttPublish(addTopic("/status/HC2_heat_curve_-10C"), String(tmpState.HeatingCurveMinus10).c_str(), false);
       break;
       
     case 0x8424:
@@ -384,35 +475,61 @@ void parseInfo(uint8_t *data, int len) {
     */
     case 0x0000: 
       mqttPublish(addTopic("/config/summer_mode_threshold"), (cfgSummerModeThreshold[data[2+1]-9]).c_str(), false);                       // "CFG_Sommer_ab"            => "0000:1,p:-9,a"
-      mqttPublish(addTopic("/config/HK1_night_temperature"), String(decode05cTemp(data[2+2]) + String(" °C")).c_str(), false);       // "CFG_HK1_Nachttemperatur"  => "0000:2,d:2"
-      mqttPublish(addTopic("/config/HK1_day_temperature"), String(decode05cTemp(data[2+3]) + String(" °C")).c_str(), false);         // CFG_HK1_Tagtemperatur"     => "0000:3,d:2"
-      mqttPublish(addTopic("/config/HK1_operating_mode"), cfgOperatingMode[data[2+4]].c_str(), false);                                  // CFG_HK1_Betriebsart"       => "0000:4,a:4"
-      mqttPublish(addTopic("/config/HK1_holiday_temperature"), String(decode05cTemp(data[2+5]) + String(" °C")).c_str(), false);      //CFG_HK1_Urlaubtemperatur"   => "0000:5,d:2"
+      mqttPublish(addTopic("/config/HC1_night_temperature"), String(decode05cTemp(data[2+2]) + String(" °C")).c_str(), false);       // "CFG_HC1_Nachttemperatur"  => "0000:2,d:2"
+      mqttPublish(addTopic("/config/HC1_day_temperature"), String(decode05cTemp(data[2+3]) + String(" °C")).c_str(), false);         // CFG_HC1_Tagtemperatur"     => "0000:3,d:2"
+      mqttPublish(addTopic("/config/HC1_operating_mode"), cfgOperatingMode[data[2+4]].c_str(), false);                                  // CFG_HC1_Betriebsart"       => "0000:4,a:4"
+      mqttPublish(addTopic("/config/HC1_holiday_temperature"), String(decode05cTemp(data[2+5]) + String(" °C")).c_str(), false);      //CFG_HC1_Urlaubtemperatur"   => "0000:5,d:2"
+      break;
+
+    case 0x0038:
+      mqttPublish(addTopic("/config/HC2_summer_mode_threshold"), (cfgSummerModeThreshold[data[2+1]-9]).c_str(), false);                       // "CFG_Sommer_ab"            => "0000:1,p:-9,a"
+      mqttPublish(addTopic("/config/HC2_night_temperature"), String(decode05cTemp(data[2+2]) + String(" °C")).c_str(), false);       // "CFG_HC1_Nachttemperatur"  => "0000:2,d:2"
+      mqttPublish(addTopic("/config/HC2_day_temperature"), String(decode05cTemp(data[2+3]) + String(" °C")).c_str(), false);         // CFG_HC1_Tagtemperatur"     => "0000:3,d:2"
+      mqttPublish(addTopic("/config/HC2_operating_mode"), cfgOperatingMode[data[2+4]].c_str(), false);                                  // CFG_HC1_Betriebsart"       => "0000:4,a:4"
+      mqttPublish(addTopic("/config/HC2_holiday_temperature"), String(decode05cTemp(data[2+5]) + String(" °C")).c_str(), false);      //CFG_HC1_Urlaubtemperatur"   => "0000:5,d:2"
       break;
 
     case 0x000e: 
-      mqttPublish(addTopic("/config/HK1_max_temperature"), String(data[2+2] + String(" °C")).c_str(), false);        // "CFG_HK1_Max_Temperatur"    => "000e:2"
-      mqttPublish(addTopic("/config/HK1_explanation"), String(data[2+4]).c_str(), false);                             // CFG_HK1_Auslegung"          => "000e:4"
+      mqttPublish(addTopic("/config/HC1_max_temperature"), String(data[2+2] + String(" °C")).c_str(), false);        // "CFG_HC1_Max_Temperatur"    => "000e:2"
+      mqttPublish(addTopic("/config/HC1_interpretation"), String(data[2+4]).c_str(), false);                             // CFG_HC1_Auslegung"          => "000e:4"
       break;
     
-    case 0x0015: 
-      mqttPublish(addTopic("/config/HK1_switch_on_temperature"), (cfgSwitchOnTemperature[data[2]] + String(" °C")).c_str(), false);  // "CFG_HK1_Aufschalttemperatur"  => "0015:0,a"
-      mqttPublish(addTopic("/config/HK1_switch_off_threshold"), String(decodeNegTemp(data[2+2]) + String(" °C")).c_str(), false);        // CFG_HK1_Aussenhalt_ab"         => "0015:2,s"
+    case 0x0046:
+      mqttPublish(addTopic("/config/HC2_max_temperature"), String(data[2+2] + String(" °C")).c_str(), false);        // "CFG_HC1_Max_Temperatur"    => "000e:2"
+      mqttPublish(addTopic("/config/HC2_interpretation"), String(data[2+4]).c_str(), false);                             // CFG_HC1_Auslegung"          => "000e:4"
+      break;
+    
+    case 0x0015:
+      mqttPublish(addTopic("/config/HC1_switch_on_temperature"), (cfgSwitchOnTemperature[data[2]] + String(" °C")).c_str(), false);  // "CFG_HC1_Aufschalttemperatur"  => "0015:0,a"
+      mqttPublish(addTopic("/config/HC1_switch_off_threshold"), String(decodeNegTemp(data[2+2]) + String(" °C")).c_str(), false);        // CFG_HC1_Aussenhalt_ab"         => "0015:2,s"
+      break;
+    
+    case 0x004d:
+      mqttPublish(addTopic("/config/HC2_switch_on_temperature"), (cfgSwitchOnTemperature[data[2]] + String(" °C")).c_str(), false);  // "CFG_HC1_Aufschalttemperatur"  => "0015:0,a"
+      mqttPublish(addTopic("/config/DHW_priority"), cfgOnOff[data[2+1]].c_str(), false);     // "CFG_WW_Vorrang"   => "004d:1,a"
+      mqttPublish(addTopic("/config/HC2_switch_off_threshold"), String(decodeNegTemp(data[2+2]) + String(" °C")).c_str(), false);        // CFG_HC1_Aussenhalt_ab"         => "0015:2,s"
       break;
     
     case 0x001c: 
-      mqttPublish(addTopic("/config/HK1_reduction_mode"), cfgReductionMode[data[2+1]].c_str(), false);     // "CFG_HK1_Absenkungsart"    => "001c:1,a"
-      mqttPublish(addTopic("/config/HK1_heating_system"), cfgHeatingSystem[data[2+2]].c_str(), false);           // "CFG_HK1_Heizsystem"       => "001c:2,a"
+      mqttPublish(addTopic("/config/HC1_reduction_mode"), cfgReductionMode[data[2+1]].c_str(), false);     // "CFG_HC1_Absenkungsart"    => "001c:1,a"
+      mqttPublish(addTopic("/config/HC1_heating_system"), cfgHeatingSystem[data[2+2]].c_str(), false);           // "CFG_HC1_Heizsystem"       => "001c:2,a"
+      break;
+
+    case 0x0054: 
+      mqttPublish(addTopic("/config/HC2_reduction_mode"), cfgReductionMode[data[2+1]].c_str(), false);     // "CFG_HC1_Absenkungsart"    => "001c:1,a"
+      mqttPublish(addTopic("/config/HC2_heating_system"), cfgHeatingSystem[data[2+2]].c_str(), false);           // "CFG_HC1_Heizsystem"       => "001c:2,a"
       break;
 
     case 0x0031: 
-      mqttPublish(addTopic("/config/HK1_temperature_offset"), String(decode05cTemp(decodeNegTemp(data[2+3])) + String(" °C")).c_str(), false);   // "CFG_HK1_Temperatur_Offset"    => "0031:3,s,d:2"
-      mqttPublish(addTopic("/config/HK1_remote_control"), cfgOnOff[data[2+4]].c_str(), false);                                                   // "CFG_HK1_Fernbedienung"        => "0031:4,a"  
+      mqttPublish(addTopic("/config/HC1_temperature_offset"), String(decode05cTemp(decodeNegTemp(data[2+3])) + String(" °C")).c_str(), false);   // "CFG_HC1_Temperatur_Offset"    => "0031:3,s,d:2"
+      mqttPublish(addTopic("/config/HC1_remote_control"), cfgOnOff[data[2+4]].c_str(), false);                                                   // "CFG_HC1_Fernbedienung"        => "0031:4,a"  
       mqttPublish(addTopic("/config/frost_protection_cutoff"), String(decodeNegTemp(data[2+5]) + String(" °C")).c_str(), false);                               // "CFG_Frost_ab"                 => "0031:5,s"
       break;
 
-    case 0x004d: 
-      mqttPublish(addTopic("/config/DHW_priority"), cfgOnOff[data[2+1]].c_str(), false);     // "CFG_WW_Vorrang"   => "004d:1,a"
+    case 0x0069:
+      mqttPublish(addTopic("/config/HC2_temperature_offset"), String(decode05cTemp(decodeNegTemp(data[2+3])) + String(" °C")).c_str(), false);   // "CFG_HC1_Temperatur_Offset"    => "0031:3,s,d:2"
+      mqttPublish(addTopic("/config/HC2_remote_control"), cfgOnOff[data[2+4]].c_str(), false);                                                   // "CFG_HC1_Fernbedienung"        => "0031:4,a"  
+      mqttPublish(addTopic("/config/HC2_frost_protection_cutoff"), String(decodeNegTemp(data[2+5]) + String(" °C")).c_str(), false);                               // "CFG_Frost_ab"                 => "0031:5,s"
       break;
 
     case 0x0070: 
@@ -451,20 +568,28 @@ void parseInfo(uint8_t *data, int len) {
 
     
     case 0x0100:
-      mqttPublish(addTopic("/config/HK1_program"), cfgHk1Program[data[2]].c_str(), false);     // "CFG_HK1_Programm"  => "0100:0"
+      mqttPublish(addTopic("/config/HC1_program"), cfgHk1Program[data[2]].c_str(), false);     // "CFG_HC1_Programm"  => "0100:0"
       break;
 
-    case 0x0400: 
+    case 0x0169:
+      mqttPublish(addTopic("/config/HC2_program"), cfgHk1Program[data[2]].c_str(), false);     // "CFG_HC1_Programm"  => "0100:0"
+      break;
+
+    case 0x0400:
         // 04_00_07_01_81_8e_00_c1_ff_00_00_00
         // some kind of lifesign - ignore
       break;
 
     // undefined
-    default:   
-      #ifdef DEBUG_ON
-        String sendString = String(data[0], HEX) + "_" + String(data[1], HEX) + "_" + String(data[2], HEX) + "_" + String(data[3], HEX) + "_" + String(data[4], HEX) + "_" + String(data[5], HEX) + "_" + String(data[6], HEX) + "_" + String(data[7], HEX) + "_" + String(data[8], HEX) + "_" + String(data[9], HEX) + "_" + String(data[10], HEX) + "_" + String(data[11], HEX);
-        mqttPublish(addTopic("/undefinded_message"), (sendString).c_str(), false); 
-      #endif                                                     
+    default:
+      if (kmregister >= 0x0107 && kmregister <= 0x0168) {
+        uint16_t n = kmregister - 0x0107;
+        // contour 1
+      }
+      if (kmregister >= 0x0170 && kmregister <= 0x01df) {
+        uint16_t n = kmregister - 0x0170;
+        // contour 2
+      }
       break;
   }
  
@@ -522,7 +647,7 @@ void km271GetStatus(s_km271_status *pDestStatus) {
 
 /**
  * *******************************************************************
- * @brief   Initializes the KM271 protocoll (based on 3964 protocol)
+ * @brief   Initializes the KM271 protocol (based on 3964 protocol)
  * @details 
  * @param   rxPin   The ESP32 RX pin number to be used for KM271 communication
  * @param   txPin   The ESP32 TX pin number to be used for KM271 communication
